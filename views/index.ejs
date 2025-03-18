@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat-Sky</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css"
+      rel="stylesheet"
+    />
+    <style>
+      ::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+  </head>
+  <body class="w-full h-screen bg-gray-200 flex justify-center items-center">
+    <div class="relative">
+      <div
+        id="loading"
+        class="hidden absolute top-0 bottom-0 inset-0 bg-white text-xl text-gray-500 flex flex-col z-50 rounded-xl p-20 space-y-4"
+      >
+        <div class="bg-gray-100 w-[300px] p-6 rounded-full animate-pulse"></div>
+        <div
+          class="bg-gray-100 w-[300px] md:w-[400px] h-[300px] p-6 rounded-xl animate-pulse"
+        ></div>
+        <div class="bg-gray-100 w-[300px] p-6 rounded-full animate-pulse"></div>
+      </div>
+      <div
+        class="h-[600px] w-[350px] sm:w-[500px] md:w-[600px] bg-blue-50 relative rounded-t-2xl overflow-y-auto"
+        id="chat-box"
+      >
+        <div class="relative pb-10">
+          <h1
+            class="text-center text-xl font-semibold text-gray-500 sticky top-0 bg-blue-50 py-2 z-99"
+          >
+            SKY-CHAT
+          </h1>
+          <ul id="output" class="p-6 min-h-full flex flex-col"></ul>
+        </div>
+      </div>
+      <div
+        class="w-full flex border absolute right-0 left-0 bottom-0 overflow-hidden bg-blue-50 z-99"
+      >
+        <input
+          type="text"
+          id="query"
+          class="w-[100%] px-2 outline-none border-none"
+          placeholder="Enter your query.."
+          autofocus
+        />
+        <button
+          id="btn"
+          class="bg-gray-800 text-white py-2 px-6 active:bg-gray-700"
+          onclick="sendQuery()"
+        >
+          <i class="ri-send-plane-2-line"></i>
+        </button>
+      </div>
+    </div>
+
+    <script>
+      const textFormat = (str) => {
+        return str.replace(/\n/g, "<br/>").replace(/\*/g, "");
+      };
+
+      const sendQuery = async () => {
+        const queryInput = document.getElementById("query");
+        const output = document.getElementById("output");
+        const btn = document.getElementById("btn");
+        const loading = document.getElementById("loading");
+
+        let query = queryInput.value.trim();
+        if (!query) return;
+
+        loading.classList.remove("hidden");
+
+        btn.setAttribute("disabled", true);
+        btn.innerHTML = `<i class="ri-menu-3-fill"></i>`;
+        btn.classList.remove("bg-gray-800", "text-white", "active:bg-gray-700");
+        btn.classList.add("bg-gray-500", "text-gray-100", "animate-pulse");
+
+        let li = document.createElement("li");
+        li.classList.add(
+          "text-end",
+          "my-2",
+          "bg-gray-800",
+          "w-fit",
+          "text-white",
+          "p-3",
+          "rounded-xl"
+        );
+        li.textContent = query;
+        output.appendChild(li);
+        queryInput.value = "";
+
+        try {
+          const response = await fetch("http://localhost:3000/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: query }),
+          });
+
+          const result = await response.json();
+
+          li = document.createElement("li");
+          li.classList.add(
+            "text-start",
+            "bg-gray-900",
+            "text-white",
+            "rounded-xl",
+            "p-3",
+            "whitespace-pre-line"
+          );
+          li.innerHTML = textFormat(result.result);
+          output.appendChild(li);
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Error fetching response!");
+        }
+
+        btn.removeAttribute("disabled");
+        btn.classList.add("bg-gray-800", "text-white");
+        btn.classList.remove("bg-gray-500", "text-gray-100", "animate-pulse");
+        btn.innerHTML = `<i class="ri-send-plane-2-line"></i>`;
+        loading.classList.add("hidden");
+      };
+    </script>
+  </body>
+</html>
